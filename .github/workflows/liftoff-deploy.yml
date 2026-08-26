@@ -14,17 +14,11 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - name: "test-app"
-            context: "."
-            dockerfilePath: "Dockerfile"
-            buildStrategy: "auto"
-            imageRepository: "pulsechat/staging/test-app"
-            command: ""
           - name: "api"
             context: "services/api"
             dockerfilePath: "services/api/Dockerfile"
             buildStrategy: "auto"
-            imageRepository: "pulsechat/staging/api"
+            imageRepository: "pulsechat/staging"
             command: ""
     steps:
       - uses: actions/checkout@v4
