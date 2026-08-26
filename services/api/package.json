@@ -1,0 +1,7 @@
+{
+  "name": "pulsechat-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "start": "node src/index.js" },
+  "dependencies": { "fastify": "^4.28.1", "ioredis": "^5.4.1" }
+}

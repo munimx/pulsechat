@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PulseChat</title>
+<style>
+  body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 44rem; margin: 3rem auto;
+         padding: 0 1rem; line-height: 1.6; color: #0f172a; }
+  header { border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  code { background: #f1f5f9; padding: .15rem .4rem; border-radius: .25rem; }
+  .row { display: flex; gap: .5rem; margin: 1rem 0; }
+  input, button { font: inherit; padding: .5rem .75rem; border: 1px solid #cbd5e1; border-radius: .375rem; }
+  button { background: #0f172a; color: white; border-color: #0f172a; cursor: pointer; }
+  li { margin: .25rem 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PulseChat</h1>
+  <p>A three-service chat demo — web, api and worker — deployed with Liftoff.</p>
+</header>
+<p>Release <code>__RELEASE__</code> &middot; internal API <code>__API__</code></p>
+<div class="row">
+  <input id="text" placeholder="Say something to the lobby" style="flex:1">
+  <button onclick="send()">Send</button>
+</div>
+<ul id="messages"></ul>
+<script>
+  async function send() {
+    const input = document.getElementById('text');
+    if (!input.value.trim()) return;
+    await fetch('/api/rooms/lobby/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: input.value, author: 'web' }),
+    });
+    input.value = '';
+    load();
+  }
+  async function load() {
+    try {
+      const res = await fetch('/api/rooms/lobby/messages');
+      const data = await res.json();
+      document.getElementById('messages').innerHTML =
+        (data.messages || []).map((m) => `<li><b>${m.author}</b>: ${m.text}</li>`).join('');
+    } catch (e) { /* the API is a separate component; ignore while it warms up */ }
+  }
+  load();
+</script>
+</body>
+</html>
