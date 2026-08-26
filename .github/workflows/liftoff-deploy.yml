@@ -2,7 +2,7 @@ name: Liftoff Deploy
 
 on:
   push:
-    branches: ['main']
+    branches: ['develop']
   # Allows POST /api/v1/.../build to trigger a fresh build without a code push.
   # The API hits GitHub's workflows/{file}/dispatches endpoint with this branch.
   workflow_dispatch:
@@ -18,7 +18,13 @@ jobs:
             context: "."
             dockerfilePath: "Dockerfile"
             buildStrategy: "auto"
-            imageRepository: "pulsechat/production"
+            imageRepository: "pulsechat/staging/test-app"
+            command: ""
+          - name: "api"
+            context: "services/api"
+            dockerfilePath: "services/api/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "pulsechat/staging/api"
             command: ""
     steps:
       - uses: actions/checkout@v4
@@ -198,11 +204,11 @@ jobs:
           fi
 
           PAYLOAD=$(cat <<JSONEOF
-          {"environmentId":"cmt9x6q0d00cac82879ib95rw","serviceName":"$SERVICE_NAME","imageUri":"$IMAGE_URI","commitSha":"$GITHUB_SHA","status":"$JOB_STATUS","runUrl":"$RUN_URL","buildStrategy":"$BUILD_STRATEGY","buildPlan":$BUILD_PLAN_JSON,"buildLogsBase64":$BUILD_LOGS_JSON}
+          {"environmentId":"cmt9x8wbl00d8c828zscnrr6u","serviceName":"$SERVICE_NAME","imageUri":"$IMAGE_URI","commitSha":"$GITHUB_SHA","status":"$JOB_STATUS","runUrl":"$RUN_URL","buildStrategy":"$BUILD_STRATEGY","buildPlan":$BUILD_PLAN_JSON,"buildLogsBase64":$BUILD_LOGS_JSON}
           JSONEOF
           )
 
           curl -X POST https://api.tryliftoff.tech/api/v1/webhooks/deploy-complete \
-            -H "X-Liftoff-Secret: ${{ secrets.LIFTOFF_DEPLOY_SECRET_CMT9X6Q0D00CAC82879IB95RW }}" \
+            -H "X-Liftoff-Secret: ${{ secrets.LIFTOFF_DEPLOY_SECRET_CMT9X8WBL00D8C828ZSCNRR6U }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD"
