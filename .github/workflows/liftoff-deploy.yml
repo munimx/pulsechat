@@ -32,7 +32,7 @@ jobs:
           CONFIGURED_DOCKERFILE_PATH: ${{ matrix.service.dockerfilePath }}
           CONFIGURED_DOCKER_CONTEXT: ${{ matrix.service.context }}
           CONFIGURED_START_COMMAND: ${{ matrix.service.command }}
-
+          NEXT_PUBLIC_API_BASE: ${{ secrets.LIFTOFF_BUILD_NEXT_PUBLIC_API_BASE }}
         # Capture every command's stdout+stderr to /tmp/build.log via tee. Notify
         # Liftoff (always-runs) reads the tail of this file so failed builds
         # surface the actual error in our UI instead of just "FAILED".
@@ -50,6 +50,8 @@ jobs:
           NIXPACKS_VERSION="1.29.1"
           DOCKER_BUILD_ARGS=""
           NIXPACKS_ENV_ARGS=""
+          if [ -n "${NEXT_PUBLIC_API_BASE+x}" ]; then DOCKER_BUILD_ARGS="$DOCKER_BUILD_ARGS --build-arg NEXT_PUBLIC_API_BASE"; fi
+          if [ -n "${NEXT_PUBLIC_API_BASE+x}" ]; then NIXPACKS_ENV_ARGS="$NIXPACKS_ENV_ARGS --env NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}"; fi
 
           install_nixpacks() {
             echo "::group::nixpacks install (v$NIXPACKS_VERSION, pinned)"
