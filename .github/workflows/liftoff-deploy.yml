@@ -18,7 +18,13 @@ jobs:
             context: "services/api"
             dockerfilePath: "services/api/Dockerfile"
             buildStrategy: "auto"
-            imageRepository: "pulsechat/staging"
+            imageRepository: "pulsechat/staging/api"
+            command: ""
+          - name: "web"
+            context: "services/web"
+            dockerfilePath: "services/web/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "pulsechat/staging/web"
             command: ""
     steps:
       - uses: actions/checkout@v4
