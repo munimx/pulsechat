@@ -18,7 +18,7 @@ jobs:
             context: "."
             dockerfilePath: "Dockerfile"
             buildStrategy: "auto"
-            imageRepository: "pulsechat/production"
+            imageRepository: "k8/production"
             command: ""
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
           CONFIGURED_DOCKERFILE_PATH: ${{ matrix.service.dockerfilePath }}
           CONFIGURED_DOCKER_CONTEXT: ${{ matrix.service.context }}
           CONFIGURED_START_COMMAND: ${{ matrix.service.command }}
-          NEXT_PUBLIC_API_BASE: ${{ secrets.LIFTOFF_BUILD_NEXT_PUBLIC_API_BASE }}
+
         # Capture every command's stdout+stderr to /tmp/build.log via tee. Notify
         # Liftoff (always-runs) reads the tail of this file so failed builds
         # surface the actual error in our UI instead of just "FAILED".
@@ -50,8 +50,6 @@ jobs:
           NIXPACKS_VERSION="1.29.1"
           DOCKER_BUILD_ARGS=""
           NIXPACKS_ENV_ARGS=""
-          if [ -n "${NEXT_PUBLIC_API_BASE+x}" ]; then DOCKER_BUILD_ARGS="$DOCKER_BUILD_ARGS --build-arg NEXT_PUBLIC_API_BASE"; fi
-          if [ -n "${NEXT_PUBLIC_API_BASE+x}" ]; then NIXPACKS_ENV_ARGS="$NIXPACKS_ENV_ARGS --env NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}"; fi
 
           install_nixpacks() {
             echo "::group::nixpacks install (v$NIXPACKS_VERSION, pinned)"
@@ -200,11 +198,11 @@ jobs:
           fi
 
           PAYLOAD=$(cat <<JSONEOF
-          {"environmentId":"cmt9x6q0d00cac82879ib95rw","serviceName":"$SERVICE_NAME","imageUri":"$IMAGE_URI","commitSha":"$GITHUB_SHA","status":"$JOB_STATUS","runUrl":"$RUN_URL","buildStrategy":"$BUILD_STRATEGY","buildPlan":$BUILD_PLAN_JSON,"buildLogsBase64":$BUILD_LOGS_JSON}
+          {"environmentId":"cmtbl2cpw05q5c828q3bk7zzc","serviceName":"$SERVICE_NAME","imageUri":"$IMAGE_URI","commitSha":"$GITHUB_SHA","status":"$JOB_STATUS","runUrl":"$RUN_URL","buildStrategy":"$BUILD_STRATEGY","buildPlan":$BUILD_PLAN_JSON,"buildLogsBase64":$BUILD_LOGS_JSON}
           JSONEOF
           )
 
           curl -X POST https://api.tryliftoff.tech/api/v1/webhooks/deploy-complete \
-            -H "X-Liftoff-Secret: ${{ secrets.LIFTOFF_DEPLOY_SECRET_CMT9X6Q0D00CAC82879IB95RW }}" \
+            -H "X-Liftoff-Secret: ${{ secrets.LIFTOFF_DEPLOY_SECRET_CMTBL2CPW05Q5C828Q3BK7ZZC }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD"
