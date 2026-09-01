@@ -18,7 +18,13 @@ jobs:
             context: "services/api"
             dockerfilePath: "services/api/Dockerfile"
             buildStrategy: "auto"
-            imageRepository: "taskflow/production"
+            imageRepository: "taskflow/production/taskflow"
+            command: ""
+          - name: "worker"
+            context: "services/worker"
+            dockerfilePath: "services/worker/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "taskflow/production/worker"
             command: ""
     steps:
       - uses: actions/checkout@v4
