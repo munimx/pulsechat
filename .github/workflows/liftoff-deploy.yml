@@ -15,8 +15,8 @@ jobs:
       matrix:
         service:
           - name: "taskflow"
-            context: "."
-            dockerfilePath: "Dockerfile"
+            context: "services/api"
+            dockerfilePath: "services/api/Dockerfile"
             buildStrategy: "auto"
             imageRepository: "taskflow/production"
             command: ""
