@@ -26,6 +26,12 @@ jobs:
             buildStrategy: "auto"
             imageRepository: "taskflow/production/worker"
             command: ""
+          - name: "web"
+            context: "services/web"
+            dockerfilePath: "services/web/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "taskflow/production/web"
+            command: ""
     steps:
       - uses: actions/checkout@v4
 
