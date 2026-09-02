@@ -18,7 +18,13 @@ jobs:
             context: "services/api"
             dockerfilePath: "services/api/Dockerfile"
             buildStrategy: "auto"
-            imageRepository: "taskflow/live"
+            imageRepository: "taskflow/live/pulsechat"
+            command: ""
+          - name: "worker"
+            context: "services/worker"
+            dockerfilePath: "services/worker/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "taskflow/live/worker"
             command: ""
     steps:
       - uses: actions/checkout@v4
