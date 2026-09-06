@@ -11,3 +11,5 @@ A three-service chat demo deployed with [Liftoff](https://tryliftoff.tech).
 `web` reaches `api` through the service link Liftoff injects as
 `INTERNAL_API_URL`; `GET /link-check` on the web service proves it resolves.
 Both `api` and `worker` need a Redis resource bound as `REDIS_URL`.
+
+<!-- liftoff webhook verification: 2026-09-06 (issues #400/#401/#322) -->
