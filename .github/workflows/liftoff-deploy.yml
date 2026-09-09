@@ -3,6 +3,12 @@ name: Liftoff Deploy
 on:
   push:
     branches: ['main']
+    # Liftoff rewrites this file whenever the canvas changes and commits it.
+    # That commit is a push, so without this every configuration change would
+    # start a full build of unchanged code. A run is skipped only when the
+    # commit touches nothing else, so real code alongside it still builds.
+    paths-ignore:
+      - '.github/workflows/liftoff-deploy.yml'
   # Allows POST /api/v1/.../build to trigger a fresh build without a code push.
   # The API hits GitHub's workflows/{file}/dispatches endpoint with this branch.
   workflow_dispatch:
@@ -155,14 +161,52 @@ jobs:
       - name: Log in to Azure Container Registry
         env:
           REGISTRY: liftoff019h3e2b.azurecr.io
+          LIFTOFF_SECRET: ${{ secrets.LIFTOFF_DEPLOY_SECRET_CMTJM8W1S0002KA4ZG6VMO89X }}
           REGISTRY_USERNAME: ${{ secrets.AZURE_REGISTRY_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
         run: |
-          if [ -z "$REGISTRY_USERNAME" ] || [ -z "$REGISTRY_PASSWORD" ]; then
-            echo "::error::Azure registry credentials are missing from this repository's secrets. Reconnect the environment in Liftoff to re-sync them."
+          set -eu
+          USERNAME=""
+          PASSWORD=""
+          # `|| true` on both halves, for the reason the DigitalOcean step
+          # gives: a Liftoff that is unreachable, slow or answering an error must
+          # fall through to the secrets below rather than kill the step under
+          # `set -e` before the fallback is reached.
+          CREDENTIAL_RESPONSE="$(curl -sS --max-time 30 --retry 2 --retry-connrefused -X POST https://api.tryliftoff.tech/api/v1/build/registry-credential \
+            -H "X-Liftoff-Secret: ${LIFTOFF_SECRET:-}" \
+            -H "Content-Type: application/json" \
+            -d '{"environmentId":"cmtjm8w1s0002ka4zg6vmo89x"}' || true)"
+          if [ -n "$CREDENTIAL_RESPONSE" ]; then
+            # One line each on purpose: this is a YAML block scalar, and a python
+            # snippet with its own indentation would end the block early.
+            USERNAME="$(printf '%s' "$CREDENTIAL_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("username",""))' 2>/dev/null || true)"
+            PASSWORD="$(printf '%s' "$CREDENTIAL_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("password",""))' 2>/dev/null || true)"
+          fi
+          # BOTH halves, not just the password. ACR needs the null-GUID username
+          # beside the token, and a response carrying one without the other
+          # would otherwise run `docker login --username ""` and fail with an
+          # auth error that looks nothing like the malformed response it is.
+          # Requiring both means a partial answer degrades to the stored
+          # credentials below, which are known to work.
+          if [ -n "$PASSWORD" ] && [ -n "$USERNAME" ]; then
+            # GitHub masks repository secrets on its own; a value fetched at run
+            # time it has never seen, so say so before it can reach a log.
+            echo "::add-mask::$PASSWORD"
+          else
+            # Defaulted rather than read bare: under `set -u` a secret that was
+            # never written to the repository is an unset variable, and the step
+            # would die with "unbound variable" instead of the message below.
+            USERNAME="${REGISTRY_USERNAME:-}"
+            PASSWORD="${REGISTRY_PASSWORD:-}"
+            if [ -n "$PASSWORD" ]; then
+              echo "::warning::Could not get a short-lived registry credential from Liftoff, so this build authenticated with Azure Container Registry credentials stored in this repository. Those do not expire and any workflow in this repository can read them. Re-sync this environment in Liftoff to remove them."
+            fi
+          fi
+          if [ -z "$PASSWORD" ]; then
+            echo "::error::Liftoff would not issue a registry credential for this build and no Azure registry credential is present in this repository's secrets. Check the environment in Liftoff and re-sync it."
             exit 1
           fi
-          printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USERNAME" --password-stdin
+          printf '%s' "$PASSWORD" | docker login "$REGISTRY" --username "$USERNAME" --password-stdin
 
       - name: Push image
         env:
@@ -214,7 +258,21 @@ jobs:
           JSONEOF
           )
 
-          curl -X POST https://api.tryliftoff.tech/api/v1/webhooks/deploy-complete \
+          RESPONSE="$(curl -sS -X POST https://api.tryliftoff.tech/api/v1/webhooks/deploy-complete \
             -H "X-Liftoff-Secret: ${{ secrets.LIFTOFF_DEPLOY_SECRET_CMTJM8W1S0002KA4ZG6VMO89X }}" \
             -H "Content-Type: application/json" \
-            -d "$PAYLOAD"
+            -d "$PAYLOAD")"
+          echo "Liftoff responded: $RESPONSE"
+
+          # Liftoff answers 200 for a delivery it accepted but attached to
+          # nothing — a build nobody was waiting for, a duplicate, a superseded
+          # one. That is deliberate: a 4xx would send GitHub into a retry loop
+          # for a callback that can never match. But it used to answer a bare
+          # {"received":true}, so a run whose image was thrown away printed the
+          # same success line as one that deployed, and this log is the only
+          # place anyone looks. Surface it as an annotation instead.
+          case "$RESPONSE" in
+            *'"recorded":false'*)
+              echo "::warning title=Liftoff did not record this build::$RESPONSE"
+              ;;
+          esac
