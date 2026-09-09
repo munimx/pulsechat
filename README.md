@@ -15,3 +15,4 @@ Both `api` and `worker` need a Redis resource bound as `REDIS_URL`.
 <!-- liftoff webhook verification: 2026-09-06 (issues #400/#401/#322) -->
 <!-- workflow-sync check, push 1 of 2: 2026-09-09 -->
 <!-- workflow-sync check, push 2 of 2: 2026-09-09 -->
+<!-- workflow-sync check, push 3: nothing in flight -->
