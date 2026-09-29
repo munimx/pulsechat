@@ -32,6 +32,12 @@ jobs:
             buildStrategy: "auto"
             imageRepository: "azlab/production2/web"
             command: ""
+          - name: "worker"
+            context: "services/worker"
+            dockerfilePath: "services/worker/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "azlab/production2/worker"
+            command: ""
     steps:
       - uses: actions/checkout@v4
 
