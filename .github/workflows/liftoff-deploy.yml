@@ -26,6 +26,12 @@ jobs:
             buildStrategy: "auto"
             imageRepository: "azlab/production2/api"
             command: ""
+          - name: "web"
+            context: "services/web"
+            dockerfilePath: "services/web/Dockerfile"
+            buildStrategy: "auto"
+            imageRepository: "azlab/production2/web"
+            command: ""
     steps:
       - uses: actions/checkout@v4
 
